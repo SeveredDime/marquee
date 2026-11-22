@@ -1,6 +1,6 @@
 # Marquee
 
-Yup, it's vibe coded, deal with it. 
+Yup, it's vibe coded, deal with it.  I thought it was a fun little project. If someone gets some use out of it great, if not it was a learning experience for me. 
 
 I have a tv operating as a digital movie poster in my theater.  It was running Posterr but I have having a lot of issues with it flickering and updating constantly so I went looking for a solution, which I didn't quite find.  I fired up Claude and this is what we came up with. 
 
