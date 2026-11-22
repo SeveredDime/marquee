@@ -121,4 +121,4 @@ Every setting is an environment variable (a field in the Unraid template).
 
 ## Credits
 
-Built by SeveredDime with help from Claude. F1 data comes from the [F1 Sensor](https://github.com/Nicxe/f1_sensor) Home Assistant integration. Marquee is a hobby project and is not affiliated with Plex, Radarr, Formula 1 or Home Assistant.
+Built by SeveredDime with help from Claude. F1 data comes from the [F1 Sensor](https://github.com/Nicxe/f1_sensor) Home Assistant integration. Marquee is a hobby project and is not affiliated with Plex, Radarr, Formula 1 or Home Assistant. It's also not related to the other open-source projects that happen to share the name Marquee.
