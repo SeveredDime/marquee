@@ -1,33 +1,34 @@
 # Marquee
 
-I wanted the TV outside my home theater to feel like the lobby of a real cinema: a big movie poster on the wall that changes on its own, shows what's playing right now, and teases what's coming soon. I used Posterr for a while, but the flicker between posters bugged me, so I built my own. That's Marquee.
+Yup, it's vibe coded, deal with it. 
 
-It's one small Docker container that talks to Plex and puts a poster board on any TV with a web browser. Mine is a TV mounted on its side, running Fully Kiosk Browser.
+I have a tv operating as a digital movie poster in my theater.  It was running Posterr but I have having a lot of issues with it flickering and updating constantly so I went looking for a solution, which I didn't quite find.  I fired up Claude and this is what we came up with. 
+
+It's a small Docker container that I run in Unraid that ties into Plex and puts a poster board on any TV with a web browser. I run it on a 42" Google TV running Fully Kiosk Browser.
 
 ![Now Available, Now Playing and Coming Soon screens](docs/images/posters.jpg)
 
-## What you'll see on the wall
+## How it operates
 
 - **When nothing is playing,** it slowly cycles through posters from your Plex movie library, with the year, studio, rating and scores underneath.
-- **When someone starts a movie,** it switches to that poster with a progress bar, how much time is left and what time it ends. Little badges show if it's 4K, HDR or Dolby TrueHD.
-- **When the home theater is in use,** the screen fades to black so it doesn't glow while you're watching.
-- **If you use Radarr,** it mixes in "Coming Soon" posters for movies that aren't out yet, and can play trailers in between, with or without sound.
-- **If you have your own posters or family photos,** you can drop them in a folder and they'll show up in the rotation too.
+- **When a movies is started,** it switches to that poster with a progress bar, how much time is left and what time it ends, along with movie information 4K, HDR or Dolby TrueHD.
+- **I didn't care for the poster to be lit while watching a movie, I find it distracting. When a movie play,** the screen fades to black, it does not turn off. You may find that distracting as well, if you have some automation in your home you could likely have it automatically fully turn off. 
+- **It pulls in Coming Soon from Radar for movies not yet released.  I didn't want past released movies in the queue to be included as there is no quartentee they will show up. 
+- **If you have your own posters or family photos,** you can drop them in a folder and they'll show up in the rotation as we;;.
 
 ### And for race weekends
 
-I'm a big Formula 1 fan, so Marquee can also hook into Home Assistant. During a race it shows who's leading with their team colours, who's in 2nd and 3rd and how far back they are, a banner when the safety car comes out, a pop-up for pit stops and fastest laps, and the winner once it's over. During race week it adds a countdown to the next race and the championship standings. It even works when you're watching a replay.
+We are big F1 Fas, so Marquee can also hook into F1 integration in Home Assistant. During a race it shows who's leading with their team colours, who's in 2nd and 3rd and how far back they are, a banner when the safety car comes out, a pop-up for pit stops and fastest laps, and the winner once it's over. During race week it adds a countdown to the next race and the championship standings in the poster rotation.  It even works when watching race replays but Home Assistant is required for that.
 
 ![F1 race leader, safety car, fastest lap and race winner screens](docs/images/f1-live.jpg)
 
-*These are screenshots of the real thing. The F1 timing numbers in them are sample data.*
 
 ## A few things I cared about
 
 - **No flicker.** Each new poster is fully loaded before it fades in, and the screen only changes when it actually needs to.
 - **Light on the server.** It's a single small Node.js program with nothing extra to install, and it checks Plex every few seconds.
 - **Your passwords stay put.** The Plex, Radarr and Home Assistant keys live in the container. The TV's browser never sees them.
-- **Easy to tweak.** Headings, the theater name across the top, how often things rotate, what ratings or genres to skip at certain hours: all of it is a setting.
+- **Easy to tweak.** Headings, the theater name across the top, how often things rotate, what ratings or genres to skip at certain hours: all of it in in the Unraid template.
 
 ## Install on Unraid
 
