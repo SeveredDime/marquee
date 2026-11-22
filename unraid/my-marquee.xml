@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>marquee</Name>
+  <Repository>marquee:latest</Repository>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/SeveredDime/marquee</Support>
+  <Project>https://github.com/SeveredDime/marquee</Project>
+  <Overview>Flicker-free Now Showing poster display for Plex on a portrait TV, with Radarr Coming Soon and trailers, and live Formula 1 screens from Home Assistant.</Overview>
+  <Category>MediaApp:Video</Category>
+  <WebUI>http://[IP]:[PORT:8686]/</WebUI>
+  <Icon>https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/plex.png</Icon>
+  <Config Name="Web Port" Target="8686" Default="8686" Mode="tcp" Description="Port the poster page is served on" Type="Port" Display="always" Required="true" Mask="false">8686</Config>
+  <Config Name="Plex URL" Target="PLEX_URL" Default="http://192.168.1.100:32400" Mode="" Description="Address of your Plex server" Type="Variable" Display="always" Required="true" Mask="false">http://192.168.1.100:32400</Config>
+  <Config Name="Plex Token" Target="PLEX_TOKEN" Default="" Mode="" Description="Your Plex token" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="Libraries" Target="LIBRARIES" Default="" Mode="" Description="Comma-separated movie library names for idle posters (blank = all movie libraries)" Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Theater Name" Target="THEATER_NAME" Default="" Mode="" Description="Shown large across the top, e.g. My Home Theater. Blank keeps the plain header" Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Rotate" Target="ROTATE" Default="0" Mode="" Description="0, 90, 180 or 270 for a sideways TV whose player only outputs landscape" Type="Variable" Display="always" Required="false" Mask="false">0</Config>
+  <Config Name="Slide Seconds" Target="SLIDE_SECONDS" Default="30" Mode="" Description="Seconds per idle poster" Type="Variable" Display="always" Required="false" Mask="false">30</Config>
+  <Config Name="Theater Players" Target="THEATER_PLAYERS" Default="" Mode="" Description="Comma-separated Plex player names that make the screen fade to black" Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Theater Mode" Target="THEATER_MODE" Default="black" Mode="" Description="black = fade to black for theater playback, poster = show it normally" Type="Variable" Display="advanced" Required="false" Mask="false">black</Config>
+  <Config Name="Hide User" Target="HIDE_USER" Default="true" Mode="" Description="Hide who is watching (false = show Watching: name)" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="Friendly User Names" Target="USER_NAMES" Default="" Mode="" Description="plexuser=Friendly Name, other=Mom (Plex names are listed in the container log)" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Hide Player" Target="HIDE_PLAYER" Default="true" Mode="" Description="Hide the player/device name next to the viewer" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="Show Title" Target="SHOW_TITLE" Default="false" Mode="" Description="Show the title as a big line under the poster" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="Show Scores" Target="SHOW_SCORES" Default="true" Mode="" Description="Critic and audience scores under the poster" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="Show Studio" Target="SHOW_STUDIO" Default="true" Mode="" Description="Studio next to the year" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="Exclude Ratings" Target="EXCLUDE_RATINGS" Default="" Mode="" Description="Content ratings left out of the slideshow, e.g. R,NC-17" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Exclude Ratings Hours" Target="EXCLUDE_RATINGS_HOURS" Default="" Mode="" Description="Only apply Exclude Ratings between these hours, e.g. 07-21" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Include Genres" Target="INCLUDE_GENRES" Default="" Mode="" Description="Only these genres in the slideshow, e.g. Comedy,Animation" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Exclude Genres" Target="EXCLUDE_GENRES" Default="" Mode="" Description="Leave these genres out, e.g. Horror" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Heading: Library" Target="HEADING_LIBRARY" Default="Now Available" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">Now Available</Config>
+  <Config Name="Heading: Playing" Target="HEADING_PLAYING" Default="Now Playing" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">Now Playing</Config>
+  <Config Name="Heading: Coming Soon" Target="HEADING_COMING_SOON" Default="Coming Soon" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">Coming Soon</Config>
+  <Config Name="Heading: Trailer" Target="HEADING_TRAILER" Default="Now Previewing" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">Now Previewing</Config>
+  <Config Name="Heading: Custom" Target="HEADING_CUSTOM" Default="Spotlight" Mode="" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">Spotlight</Config>
+  <Config Name="Custom Posters" Target="/posters" Default="/mnt/user/appdata/marquee/posters" Mode="ro" Description="Folder of your own posters and photos" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/marquee/posters</Config>
+  <Config Name="Custom Every" Target="CUSTOM_EVERY" Default="4" Mode="" Description="Show one of your own images after every N posters (0 = off)" Type="Variable" Display="advanced" Required="false" Mask="false">4</Config>
+  <Config Name="Radarr URL" Target="RADARR_URL" Default="" Mode="" Description="Radarr address, e.g. http://192.168.1.100:7878 (Coming Soon and trailers)" Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Radarr API Key" Target="RADARR_API_KEY" Default="" Mode="" Description="Radarr &gt; Settings &gt; General" Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Movies Folder" Target="/movies" Default="/mnt/user/Media/Movies" Mode="ro" Description="Your movies folder, read-only, for local trailer files" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/Media/Movies</Config>
+  <Config Name="Coming Soon Every" Target="COMING_SOON_EVERY" Default="6" Mode="" Description="Coming Soon poster after every N posters (0 = off)" Type="Variable" Display="advanced" Required="false" Mask="false">6</Config>
+  <Config Name="Trailers Every" Target="TRAILERS_EVERY" Default="8" Mode="" Description="Play a trailer after every N posters (0 = off)" Type="Variable" Display="advanced" Required="false" Mask="false">8</Config>
+  <Config Name="Trailer Muted" Target="TRAILER_MUTED" Default="true" Mode="" Description="false = trailers play with sound" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="Trailer Volume" Target="TRAILER_VOLUME" Default="60" Mode="" Description="0-100" Type="Variable" Display="advanced" Required="false" Mask="false">60</Config>
+  <Config Name="Home Assistant URL" Target="HA_URL" Default="" Mode="" Description="For the F1 screens, e.g. http://192.168.1.100:8123" Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Home Assistant Token" Target="HA_TOKEN" Default="" Mode="" Description="Long-lived access token (HA Profile &gt; Security)" Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="F1 Leader" Target="F1_LEADER" Default="true" Mode="" Description="Show the F1 race leader during live sessions and replays" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="F1 Winner Minutes" Target="F1_WINNER_MINUTES" Default="15" Mode="" Description="Minutes to show the winner after a race (0 = off)" Type="Variable" Display="advanced" Required="false" Mask="false">15</Config>
+  <Config Name="F1 Cards Every" Target="F1_CARDS_EVERY" Default="8" Mode="" Description="Race-week countdown and standings cards every N posters (0 = off)" Type="Variable" Display="advanced" Required="false" Mask="false">8</Config>
+  <Config Name="TZ" Target="TZ" Default="America/New_York" Mode="" Description="Time zone for end times and race countdowns" Type="Variable" Display="always" Required="false" Mask="false">America/New_York</Config>
+</Container>

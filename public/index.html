@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marquee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080b;
+    --text: #f4f5f7;
+    --muted: #9aa0aa;
+    --faint: rgba(255,255,255,.14);
+    --accent: #e8414f;
+    --fade: 1400ms;
+    --vh: 1vh; --vw: 1vw;
+  }
+  /* ROTATE: for a TV mounted sideways whose player can only output landscape. The stage is turned and sized as portrait. */
+  body.rot90, body.rot270 { --vh: 1vw; --vw: 1vh; }
+  body.rot90 #stage, body.rot270 #stage { inset: auto; top: 0; left: 0; width: 100vh; height: 100vw; transform-origin: 0 0; }
+  body.rot270 #stage { transform: rotate(-90deg) translateX(-100%); }
+  body.rot90 #stage { transform: rotate(90deg) translateY(-100%); }
+  body.rot180 #stage { transform: rotate(180deg); }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  body { color: var(--text); font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+
+  #stage { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+    background: radial-gradient(120% 70% at 50% 45%, #15171d 0%, var(--bg) 60%, #000 100%); }
+
+  /* Header: theater name + a small label for what is on screen. Same height in every mode. */
+  header { flex: 0 0 auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(.9 * var(--vh)); padding: calc(1.9 * var(--vh)) 0 calc(1.5 * var(--vh)); box-sizing: border-box; }
+  #brand { display: none; font-weight: 800; font-size: min(calc(3.4 * var(--vh)), calc(5.2 * var(--vw))); letter-spacing: .32em; padding-left: .32em; white-space: nowrap; line-height: 1; text-transform: uppercase; }
+  body.branded #brand { display: block; }
+  #heading { display: inline-flex; align-items: center; gap: .7em; font-weight: 600; font-size: min(calc(1.6 * var(--vh)), calc(2.6 * var(--vw))); letter-spacing: .3em; padding-left: .3em; text-transform: uppercase; color: var(--muted); white-space: nowrap; line-height: 1; transition: opacity 700ms ease; }
+  #heading::before { content: ""; width: .55em; height: .55em; border-radius: 50%; background: var(--accent); box-shadow: 0 0 .9em var(--accent); }
+  body:not(.branded) #heading { font-size: min(calc(2.4 * var(--vh)), calc(3.6 * var(--vw))); color: var(--text); }
+
+  /* Poster: two stacked layers that cross-fade only after the next image is fully decoded */
+  #poster { flex: 1 1 auto; width: 96%; position: relative; }
+  #poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity var(--fade) ease; will-change: opacity; }
+  #poster img.on { opacity: 1; }
+
+  /* Footer: compact, fixed height in every mode so the poster never resizes */
+  footer { position: relative; flex: 0 0 calc(14.5 * var(--vh)); width: 90%; padding: calc(1.4 * var(--vh)) 0 calc(1 * var(--vh)); box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; gap: calc(.75 * var(--vh)); transition: opacity 700ms ease; overflow: hidden; }
+  footer > * { flex-shrink: 0; }
+  /* SHOW_TITLE=false (default): the poster already shows the title, so the footer is shorter and the poster bigger */
+  body.notitle #title { display: none; }
+  body.notitle footer { flex-basis: calc(10.6 * var(--vh)); }
+  #title { font-size: calc(2.9 * var(--vh)); font-weight: 700; letter-spacing: -.01em; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+  .meta { display: flex; justify-content: center; align-items: center; flex-wrap: nowrap; gap: calc(1.1 * var(--vh)); min-height: calc(2.4 * var(--vh)); font-size: calc(1.55 * var(--vh)); color: var(--muted); white-space: nowrap; overflow: hidden; }
+  #sub { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+  #sub:empty, #scores:empty { display: none; }
+  #sub:not(:empty) + #scores:not(:empty)::before { content: ""; width: 1px; align-self: stretch; margin: calc(.3 * var(--vh)) 0; background: var(--faint); }
+  #chips { display: flex; justify-content: center; gap: calc(.6 * var(--vh)); min-height: calc(2.3 * var(--vh)); flex-wrap: nowrap; overflow: hidden; }
+  .chip { font-size: calc(1.25 * var(--vh)); font-weight: 600; letter-spacing: .06em; padding: calc(0.25 * var(--vh)) calc(0.7 * var(--vh)); border: 1px solid var(--faint); color: var(--text); border-radius: calc(0.45 * var(--vh)); background: rgba(255,255,255,.04); }
+  #scores { display: flex; gap: calc(1.2 * var(--vh)); flex: 0 0 auto; }
+  #scores span { color: var(--muted); }
+  #scores b { color: var(--text); font-weight: 600; margin-left: .35em; }
+  body.noscores #scores { display: none; }
+  #progress { position: absolute; left: 0; right: 0; top: 0; height: calc(.4 * var(--vh)); background: var(--faint); border-radius: 99px; overflow: hidden; visibility: hidden; }
+  #bar { position: absolute; inset: 0; background: var(--accent); border-radius: 99px; transform-origin: left center; transform: scaleX(0); transition: transform 5s linear; }
+  #times { display: flex; justify-content: space-between; gap: calc(1.5 * var(--vh)); font-size: calc(1.4 * var(--vh)); color: var(--muted); font-variant-numeric: tabular-nums; visibility: hidden; min-height: calc(1.8 * var(--vh)); }
+  #times > span { flex: 1 1 0; white-space: nowrap; }
+  #who { text-align: center; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+  #ends { text-align: right; }
+
+  /* Trailers: a video layer over the poster that only fades in once the video is actually playing */
+  #trailer { position: absolute; inset: 0; opacity: 0; transition: opacity var(--fade) ease; background: #000; pointer-events: none; }
+  #trailer.on { opacity: 1; }
+  #vid, #yt, #yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border: 0; background: #000; }
+
+  /* F1 leader: driver headshot over a glow in the team colour, with the car number behind */
+  #f1bg { position: absolute; inset: 0; opacity: 0; transition: opacity var(--fade) ease; pointer-events: none; overflow: hidden;
+    background: radial-gradient(70% 55% at 50% 62%, var(--team, #e8414f) 0%, transparent 72%); }
+  #f1num { position: absolute; left: 0; right: 0; top: 4%; text-align: center; font-weight: 800; font-size: calc(38 * var(--vh)); line-height: 1; letter-spacing: -.04em; color: rgba(255,255,255,.07); }
+  body.f1 #f1bg { opacity: .6; }
+  body.f1 #title { display: block; }
+  body.f1 footer { flex-basis: calc(14.5 * var(--vh)); }
+  /* F1: quicker swaps so a lead change shows straight away */
+  body.f1 { --fade: 500ms; }
+  body.f1 footer, body.f1 #heading { transition-duration: 250ms; }
+  body.f1 #heading::before { background: var(--team, #e8414f); box-shadow: 0 0 .9em var(--team, #e8414f); }
+  /* F1 extras: P2/P3 cards, flag banner, short pop-ups */
+  #f1pod, #f1flag, #f1toast { position: absolute; left: 0; right: 0; opacity: 0; transition: opacity 400ms ease; pointer-events: none; }
+  body.f1 #f1pod { opacity: 1; }
+  #f1pod { bottom: calc(1 * var(--vh)); display: flex; justify-content: space-between; gap: calc(1.5 * var(--vh)); padding: 0 calc(1 * var(--vh)); }
+  .pod { flex: 0 1 46%; display: flex; align-items: center; gap: calc(1 * var(--vh)); padding: calc(.7 * var(--vh)) calc(1.2 * var(--vh)) calc(.7 * var(--vh)) calc(.7 * var(--vh));
+    background: rgba(16,18,24,.82); border-radius: calc(1.2 * var(--vh)); border-left: calc(.45 * var(--vh)) solid var(--c, #888); backdrop-filter: blur(6px); box-sizing: border-box; min-width: 0; }
+  .pod img { width: calc(6.4 * var(--vh)); height: calc(6.4 * var(--vh)); object-fit: cover; object-position: top; border-radius: 50%; background: rgba(255,255,255,.06); flex: 0 0 auto; }
+  .pod .p { font-weight: 800; font-size: calc(2.4 * var(--vh)); flex: 0 0 auto; }
+  .pod .n { display: flex; flex-direction: column; min-width: 0; }
+  .pod .n b { font-size: calc(1.9 * var(--vh)); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pod .n span { font-size: calc(1.5 * var(--vh)); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #f1flag { top: 0; text-align: center; font-weight: 800; letter-spacing: .25em; padding: calc(1 * var(--vh)) 0 calc(1 * var(--vh)) .25em; font-size: calc(2.2 * var(--vh)); text-transform: uppercase; border-radius: calc(1 * var(--vh)); }
+  body.f1.flag #f1flag { opacity: 1; animation: flagpulse 2s ease-in-out infinite; }
+  body.flag-sc #f1flag, body.flag-vsc #f1flag, body.flag-yellow #f1flag { background: #f5c518; color: #111; }
+  body.flag-red #f1flag { background: #e10600; color: #fff; }
+  body.flag-sc #f1bg, body.flag-vsc #f1bg { background: radial-gradient(70% 55% at 50% 62%, #f5c518 0%, transparent 72%); }
+  body.flag-red #f1bg { background: radial-gradient(70% 55% at 50% 62%, #e10600 0%, transparent 72%); }
+  @keyframes flagpulse { 50% { filter: brightness(1.25); } }
+  #f1toast { top: calc(7 * var(--vh)); margin: 0 auto; width: max-content; max-width: 90%; padding: calc(1 * var(--vh)) calc(2.2 * var(--vh)); border-radius: 99px; font-weight: 700; font-size: calc(2 * var(--vh));
+    background: rgba(16,18,24,.9); border: 1px solid var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: translateY(-20%); transition: opacity 400ms ease, transform 400ms ease; }
+  body.f1 #f1toast.on { opacity: 1; transform: none; }
+  #f1toast.fastest { border-color: #a855f7; box-shadow: 0 0 1.5em rgba(168,85,247,.45); }
+  #f1toast.pit { border-color: #f5c518; }
+
+  .hidden { opacity: 0 !important; }
+
+  /* Theater playback: everything fades to black */
+  #black { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 3s ease; }
+  #black.on { opacity: 1; }
+</style>
+</head>
+<body class="notitle">
+<div id="stage">
+  <header><div id="brand"></div><div id="heading">Now Available</div></header>
+  <div id="poster"><div id="f1bg"><div id="f1num"></div></div><img id="a" alt=""><img id="b" alt=""><div id="trailer"><video id="vid" playsinline preload="auto"></video><div id="yt"></div></div><div id="f1pod"></div><div id="f1flag"></div><div id="f1toast"></div></div>
+  <footer id="foot">
+    <div id="progress"><div id="bar"></div></div>
+    <div id="title"></div>
+    <div class="meta"><div id="sub"></div><div id="scores"></div></div>
+    <div id="chips"></div>
+    <div id="times"><span id="elapsed"></span><span id="who"></span><span id="ends"></span></div>
+  </footer>
+</div>
+<div id="black"></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var layers = [$('a'), $('b')], front = 0;
+  var slideMs = 30000;
+  var live = { mode: 'idle', sessions: [], at: Date.now() };
+  var library = [], libIdx = 0, sessIdx = 0;
+  var vol = 0.6, noTitle = true;
+  var H = { f1: 'Race Leader', library: 'Now Available', playing: 'Now Playing', trailer: 'Now Previewing' };
+  var slideTimer = null, progTimer = null;
+  var shownKey = null;       // poster currently on screen
+  var shownText = '';        // caption currently on screen
+
+  // ---- helpers ----
+  function preload(src) {
+    return new Promise(function (resolve, reject) {
+      var im = new Image();
+      im.onload = function () { if (im.decode) im.decode().then(function () { resolve(src); }, function () { resolve(src); }); else resolve(src); };
+      im.onerror = reject;
+      im.src = src;
+    });
+  }
+  var wantedKey = null;      // newest poster requested; older loads that finish late are ignored
+  // Poster and caption always change together: the caption is only swapped once its poster is ready.
+  // If the poster can't be loaded (after one retry), the old poster is faded out rather than left
+  // sitting under the wrong title.
+  function show(key, src, text) {
+    wantedKey = key;
+    if (key === shownKey) { setText.apply(null, text); return; }   // same poster: only refresh text if it changed
+    var swap = function (ok) {
+      if (key !== wantedKey || key === shownKey) return;           // superseded while loading
+      var back = layers[1 - front];
+      if (ok) { back.src = src; back.classList.add('on'); } else { back.classList.remove('on'); }
+      layers[front].classList.remove('on');
+      front = 1 - front;
+      shownKey = key;
+      setText.apply(null, text);
+    };
+    preload(src).then(function () { swap(true); }, function () {
+      setTimeout(function () {
+        if (key !== wantedKey) return;
+        preload(src + '&r=1').then(function () { swap(true); }, function () { swap(false); });
+      }, 2000);
+    });
+  }
+  function setText(heading, title, sub, chips, withProgress, who, scores) {
+    who = who || ''; scores = scores || [];
+    var sig = [heading, title, sub, chips.join('|'), withProgress, who, scores.join('|')].join('#');
+    if (sig === shownText) return;
+    var foot = $('foot');
+    var headingChanged = $('heading').textContent !== heading;
+    foot.classList.add('hidden');
+    if (headingChanged) $('heading').classList.add('hidden');
+    setTimeout(function () {
+      $('heading').textContent = heading;
+      $('title').textContent = title;
+      $('sub').textContent = sub;
+      var c = $('chips'); c.innerHTML = '';
+      chips.forEach(function (t) { if (!t) return; var s = document.createElement('span'); s.className = 'chip'; s.textContent = t; c.appendChild(s); });
+      $('who').textContent = who;
+      var sc = $('scores'); sc.innerHTML = '';
+      scores.forEach(function (t) { var m = /^(.*?)\s(\S+)$/.exec(t); var s = document.createElement('span'); if (m) { s.textContent = m[1]; var b = document.createElement('b'); b.textContent = m[2]; s.appendChild(b); } else s.textContent = t; sc.appendChild(s); });
+      $('progress').style.visibility = withProgress ? 'visible' : 'hidden';
+      $('times').style.visibility = withProgress ? 'visible' : 'hidden';
+      foot.classList.remove('hidden');
+      $('heading').classList.remove('hidden');
+      shownText = sig;
+    }, document.body.classList.contains('f1') ? 250 : 700);
+  }
+  function fmtTime(ms) {
+    var d = new Date(ms), h = d.getHours(), m = d.getMinutes();
+    return (h % 12 || 12) + ':' + (m < 10 ? '0' : '') + m + (h < 12 ? ' AM' : ' PM');
+  }
+  function fmtDur(ms) {
+    var t = Math.max(0, Math.round(ms / 60000)), h = Math.floor(t / 60), m = t % 60;
+    return h ? h + 'h ' + (m < 10 ? '0' : '') + m + 'm' : m + 'm';
+  }
+
+  // ---- progress: interpolated locally, updated every 5 s with a CSS transition ----
+  function tickProgress() {
+    var s = live.sessions[sessIdx];
+    if (live.mode !== 'playing' || !s || !s.duration) return;
+    var pos = s.viewOffset + (s.state === 'playing' ? Date.now() - live.at : 0);
+    pos = Math.min(pos, s.duration);
+    var ahead = s.state === 'playing' ? Math.min(pos + 5000, s.duration) : pos;   // bar glides to where it will be in 5 s
+    $('bar').style.transform = 'scaleX(' + (ahead / s.duration).toFixed(4) + ')';
+    $('elapsed').textContent = s.state === 'paused' ? 'PAUSED · ' + fmtDur(s.duration - pos) + ' left' : fmtDur(s.duration - pos) + ' left';
+    $('ends').textContent = 'Ends ' + fmtTime(Date.now() + (s.duration - pos));
+  }
+
+  // ---- rendering ----
+  function renderSession() {
+    var s = live.sessions[sessIdx % live.sessions.length];
+    var chips = [s.rating, s.resolution, s.hdr, s.audio];
+    var sub = [s.subtitle, s.studio].filter(Boolean).join('  ·  ');
+    var who = s.user ? 'Watching: ' + s.user + (s.player ? ' · ' + s.player : '') : '';
+    var bar = $('bar'); bar.style.transition = 'none';
+    show('s' + s.key, '/img?t=' + encodeURIComponent(s.thumb), [H.playing, s.title, sub, chips, true, who, s.scores]);
+    tickProgress(); bar.offsetWidth; bar.style.transition = '';
+  }
+  // ---- trailers ----
+  var trailer = null, trailerTimers = [], ytApi = null, ytPlayer = null;
+  function clearTrailerTimers() { trailerTimers.forEach(clearTimeout); trailerTimers = []; }
+  function loadYtApi() {
+    if (ytApi) return ytApi;
+    ytApi = new Promise(function (resolve, reject) {
+      window.onYouTubeIframeAPIReady = function () { resolve(window.YT); };
+      var s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.onerror = function () { ytApi = null; reject(); };
+      document.head.appendChild(s);
+      setTimeout(function () { if (!window.YT || !window.YT.Player) { ytApi = null; reject(); } }, 15000);
+    });
+    return ytApi;
+  }
+  function stopTrailer() {
+    clearTrailerTimers();
+    var was = trailer; trailer = null;
+    if (!was) return;
+    $('trailer').classList.remove('on');
+    setTimeout(function () {                     // tear down only after the fade-out
+      if (trailer) return;
+      var v = $('vid'); v.pause(); v.removeAttribute('src'); v.load();
+      if (ytPlayer) { try { ytPlayer.destroy(); } catch (e) {} ytPlayer = null; $('trailer').innerHTML = '<video id="vid" playsinline preload="auto"></video><div id="yt"></div>'; }
+    }, 1500);
+  }
+  function trailerDone(m) {
+    if (trailer !== m) return;
+    stopTrailer();
+    clearInterval(slideTimer); slideTimer = setInterval(advance, slideMs);   // next poster gets its full time
+    advance(true);
+  }
+  function playTrailer(m) {
+    stopTrailer();
+    if (ytPlayer) { try { ytPlayer.destroy(); } catch (e) {} ytPlayer = null; $('trailer').innerHTML = '<video id="vid" playsinline preload="auto"></video><div id="yt"></div>'; }
+    var t = { m: m, started: false }; trailer = t; wantedKey = m.key;
+    var fail = function () { if (trailer === t && !t.started) { trailer = null; clearTrailerTimers(); advance(true); } };
+    var start = function () {
+      if (trailer !== t || t.started) return;
+      if (live.mode !== 'idle' || wantedKey !== m.key) { stopTrailer(); return; }
+      t.started = true;
+      $('trailer').classList.add('on');
+      layers[front].classList.remove('on');      // poster fades out underneath
+      shownKey = m.key;
+      setText(m.heading || H.trailer, m.title || '', noTitle ? [m.title, m.sub].filter(Boolean).join('  ·  ') : (m.sub || ''), m.chips || [], false, '', m.scores);
+      trailerTimers.push(setTimeout(function () { trailerDone(t); }, (m.max || 150) * 1000));
+    };
+    trailerTimers.push(setTimeout(fail, 20000));  // never started: skip it
+    if (m.video) {
+      var v = $('vid'); v.muted = m.muted !== false; v.volume = vol;
+      var noCaptions = function () { for (var i = 0; i < v.textTracks.length; i++) v.textTracks[i].mode = 'disabled'; };
+      v.onloadedmetadata = noCaptions; v.textTracks.onaddtrack = noCaptions;
+      v.oncanplaythrough = function () { v.play().then(start, function () { v.muted = true; v.play().then(start, fail); }); };
+      v.onended = function () { trailerDone(t); }; v.onerror = fail;
+      v.src = m.video; v.load();
+    } else if (m.youtube) {
+      loadYtApi().then(function (YT) {
+        if (trailer !== t) return;
+        ytPlayer = new YT.Player('yt', { videoId: m.youtube, host: 'https://www.youtube-nocookie.com',
+          playerVars: { autoplay: 1, mute: m.muted !== false ? 1 : 0, cc_load_policy: 0, cc_lang_pref: 'zz', controls: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, disablekb: 1, fs: 0 },
+          events: {
+            onReady: function (e) {
+              var p = e.target;
+              try { p.unloadModule('captions'); p.unloadModule('cc'); } catch (x) {}
+              if (m.muted !== false) p.mute(); else { p.unMute(); p.setVolume(Math.round(vol * 100)); }
+              p.playVideo();
+              // If the browser blocks autoplay with sound, fall back to a silent trailer rather than skipping it.
+              if (m.muted === false) trailerTimers.push(setTimeout(function () { if (trailer === t && !t.started) { p.mute(); p.playVideo(); } }, 5000));
+            },
+            onStateChange: function (e) { if (e.data === 1) { try { e.target.unloadModule('captions'); } catch (x) {} start(); } else if (e.data === 0) trailerDone(t); },
+            onError: function () { if (t.started) trailerDone(t); else fail(); }
+          } });
+      }, fail);
+    } else fail();
+  }
+
+  function renderLibrary() {
+    if (!library.length) { setText(H.library, '', '', [], false); return; }
+    var m = library[libIdx % library.length];
+    if (m.video || m.youtube) { playTrailer(m); return; }
+    show(m.key, m.src, [m.heading || H.library, m.title || '', m.sub || '', m.chips || [], false, '', m.scores]);
+  }
+  function advance(force) {
+    if (live.mode === 'black' || live.mode === 'f1') return;
+    if (trailer && force !== true && live.mode === 'idle') return;   // a trailer is on screen; it moves on when it ends
+    if (live.mode === 'playing') {
+      if (live.sessions.length > 1) { sessIdx = (sessIdx + 1) % live.sessions.length; renderSession(); }
+      return;
+    }
+    libIdx++;
+    if (libIdx >= library.length) { loadLibrary(); libIdx = 0; }
+    renderLibrary();
+  }
+  function renderF1() {
+    var f = live.f1; if (!f) return;
+    document.body.style.setProperty('--team', f.color || '#e8414f');
+    $('f1num').textContent = f.number || '';
+    var race = /race|sprint/i.test(f.session || '');
+    var heading = f.winner ? (f.heading || 'Race Winner') : race ? H.f1 : (f.session ? f.session + ' leader' : H.f1);
+    var lap = f.lap && f.laps ? 'Lap ' + f.lap + '/' + f.laps : '';
+    show(f.key, f.img || '', [heading, f.name, [f.team, f.meeting].filter(Boolean).join('  ·  '), f.winner ? ['WINNER', f.number ? '#' + f.number : '', f.session] : ['P1', f.number ? '#' + f.number : '', race ? lap : ''], false, '', []]);
+    // P2 and P3 with their gap to the leader (or the final gap on the winner screen)
+    var pod = (f.podium || []).map(function (p) {
+      return '<div class="pod" style="--c:' + esc(p.color) + '">' + (p.img ? '<img src="' + esc(p.img) + '" alt="">' : '') + '<div class="p">P' + p.pos + '</div><div class="n"><b>' + esc(p.name) + '</b><span>' + esc(p.gap || p.team) + '</span></div></div>';
+    }).join('');
+    if ($('f1pod').innerHTML !== pod) $('f1pod').innerHTML = pod;
+    var flag = f.flag || '', b = document.body;
+    ['flag', 'flag-sc', 'flag-vsc', 'flag-red', 'flag-yellow'].forEach(function (c) { b.classList.remove(c); });
+    if (flag) { b.classList.add('flag', 'flag-' + ({ 'Safety Car': 'sc', 'Virtual Safety Car': 'vsc', 'Red Flag': 'red' }[flag] || 'yellow')); $('f1flag').textContent = flag; }
+    var t = f.toast, el = $('f1toast');
+    if (t && el.getAttribute('data-id') !== String(t.id)) { el.textContent = t.text; el.className = 'on ' + (t.kind || ''); el.setAttribute('data-id', t.id); }
+    else if (!t) el.classList.remove('on');
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function apply(next) {
+    var prevMode = live.mode;
+    var prevId = live.sessions[sessIdx] ? live.sessions[sessIdx].id : null;
+    live = next;
+    if (live.mode !== 'idle' && trailer) stopTrailer();
+    $('black').classList.toggle('on', live.mode === 'black');
+    document.body.classList.toggle('f1', live.mode === 'f1');
+    if (live.mode === 'f1') { renderF1(); return; }
+    if (live.mode === 'playing') {
+      var i = -1; live.sessions.forEach(function (s, n) { if (s.id === prevId) i = n; });
+      sessIdx = i >= 0 ? i : 0;
+      renderSession();
+    } else if (live.mode === 'idle' && prevMode !== 'idle') {
+      renderLibrary();
+    }
+  }
+
+  function loadLibrary() {
+    return fetch('/api/library').then(function (r) { return r.json(); }).then(function (l) { library = l || []; }).catch(function () {});
+  }
+
+  // ---- start ----
+  fetch('/api/config').then(function (r) { return r.json(); }).catch(function () { return {}; }).then(function (c) {
+    if (c.slideSeconds) slideMs = c.slideSeconds * 1000;
+    if (typeof c.trailerVolume === 'number') vol = Math.max(0, Math.min(1, c.trailerVolume / 100));
+    if (c.headings) { for (var k in c.headings) if (c.headings[k]) H[k] = c.headings[k]; $('heading').textContent = H.library; }
+    if (c.showScores === false) document.body.classList.add('noscores');
+    noTitle = c.showTitle !== true; document.body.classList.toggle('notitle', noTitle);
+    var rot = String(new URLSearchParams(location.search).get('rotate') || c.rotate || '0');
+    if (/^(90|180|270)$/.test(rot)) document.body.classList.add('rot' + rot);
+    if (c.theaterName) { $('brand').textContent = c.theaterName; document.title = c.theaterName; document.body.classList.add('branded'); }
+    return loadLibrary();
+  }).then(function () {
+    renderLibrary();
+    slideTimer = setInterval(advance, slideMs);
+    progTimer = setInterval(tickProgress, 5000);
+    var es = new EventSource('/events');
+    es.onmessage = function (e) { try { apply(JSON.parse(e.data)); } catch (x) {} };
+  });
+
+  // Safety net: a full reload once a day keeps long-running kiosk browsers healthy (at 4 AM, when nothing should be playing).
+  setInterval(function () { var d = new Date(); if (d.getHours() === 4 && d.getMinutes() === 0 && live.mode !== 'playing') location.reload(); }, 60000);
+})();
+</script>
+</body>
+</html>

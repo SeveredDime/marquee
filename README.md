@@ -1,1 +1,120 @@
-# marquee
+# Marquee
+
+A movie-theater style **Now Showing** display for Plex. It runs as one small Docker container and turns a TV (portrait or landscape) into a cinema lobby poster board, with no flicker between screens.
+
+![Poster screens](docs/images/posters.png)
+
+## What it shows
+
+- **Now Available.** Random posters from your Plex movie libraries, cross-fading on a timer.
+- **Now Playing.** When someone is watching, the poster with rating, 4K/HDR, audio format, a progress bar, time left and end time.
+- **Theater mode.** When your home-theater player is playing, the screen fades to black so it doesn't light up the room.
+- **Coming Soon and trailers** (optional, needs Radarr). Upcoming movies from Radarr, and trailers from your own files or YouTube, with or without sound.
+- **Spotlight** (optional). Your own posters and photos, mixed into the slideshow.
+- **Formula 1** (optional, needs Home Assistant). During a live session, or an F1 replay, it shows the race leader with team colours, P2/P3 with gaps, flag and safety-car banners, pit and fastest-lap pop-ups, and the winner when the race ends. During race week it adds a countdown card and the championship standings.
+
+![F1 live screens](docs/images/f1-live.png)
+
+![F1 race week cards](docs/images/f1-race-week.png)
+
+*Screenshots use placeholder artwork.*
+
+## How it works
+
+- One Node.js 22 server with no outside packages. It checks Plex every few seconds and pushes changes to the page.
+- The page only changes when the picture should change. New images are fully loaded before they fade in, so there's no flashing or blank frames.
+- Your Plex, Radarr and Home Assistant keys stay in the container. The browser never sees them.
+- Built for a TV running a kiosk browser such as Fully Kiosk Browser. Any browser works: open `http://<server>:8686`.
+
+## Install on Unraid
+
+1. Open the Unraid terminal and download the code:
+   ```sh
+   mkdir -p /mnt/user/appdata/marquee && cd /mnt/user/appdata/marquee
+   git clone https://github.com/SeveredDime/marquee.git
+   cd marquee && docker build -t marquee:latest .
+   ```
+2. Copy the template so it shows up in Unraid:
+   ```sh
+   cp unraid/my-marquee.xml /boot/config/plugins/dockerMan/templates-user/my-marquee.xml
+   ```
+3. In Unraid go to **Docker > Add Container**, pick **marquee** from the template list, fill in your Plex address and Plex token, and click **Apply**.
+4. On the TV, open `http://<unraid-ip>:8686`.
+
+To update later: `cd /mnt/user/appdata/marquee/marquee && git pull && docker build -t marquee:latest .`, then restart the container from the Docker tab.
+
+## Install with Docker anywhere else
+
+```sh
+git clone https://github.com/SeveredDime/marquee.git && cd marquee
+docker build -t marquee:latest .
+docker run -d --name marquee -p 8686:8686 \
+  -e PLEX_URL=http://192.168.1.100:32400 \
+  -e PLEX_TOKEN=your-plex-token \
+  -e TZ=America/New_York \
+  --restart unless-stopped marquee:latest
+```
+
+Add `-v /path/to/posters:/posters:ro` for your own images and `-v /path/to/movies:/movies:ro` for local trailer files.
+
+## Optional extras
+
+- **Coming Soon and trailers:** set `RADARR_URL` and `RADARR_API_KEY`.
+- **Formula 1 screens:** see [docs/home-assistant-f1.md](docs/home-assistant-f1.md).
+- **Sideways TV:** set `ROTATE` to `90`, `180` or `270` if your TV is mounted on its side but the player only outputs landscape.
+
+## All settings
+
+Every setting is an environment variable (a field in the Unraid template).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PLEX_URL` | `http://localhost:32400` | Your Plex server |
+| `PLEX_TOKEN` | (required) | Plex token |
+| `LIBRARIES` | all movie libraries | Comma-separated library names for idle posters |
+| `SLIDE_SECONDS` | `30` | Seconds per idle poster |
+| `THEATER_PLAYERS` | (none) | Comma-separated player names that trigger the black screen, e.g. `SHIELD` |
+| `THEATER_MODE` | `black` | `black` = fade to black for theater playback, `poster` = show it like any other stream |
+| `HIDE_USER` | `true` | Hide who is watching. Set to `false` to show "Watching: name" under the progress bar |
+| `USER_NAMES` | (none) | Friendly names for Plex users, e.g. `jsmith=John, kidsaccount=The Kids`. Matched on Plex user name or user id, not case-sensitive. Users not listed show their Plex name. The container log prints each Plex user name the first time it is seen |
+| `HIDE_PLAYER` | `true` | Hide the player/device name next to the viewer |
+| `POLL_SECONDS` | `5` | How often Plex is checked |
+| `THEATER_NAME` | *(blank)* | Your theater's name, shown large across the top (e.g. `My Home Theater`). The mode line (Now Available, Now Playing, Coming Soon, Now Previewing, Spotlight) moves underneath in smaller type. Blank keeps the original header. |
+| `ROTATE` | `0` | Turn the whole display for a sideways-mounted TV whose player only outputs landscape: `270` (counter-clockwise), `90` (clockwise) or `180`. Add `?rotate=` to the page URL to try a value without restarting. |
+| `HEADING_LIBRARY` | `Now Available` | Heading over posters from your Plex library |
+| `HEADING_PLAYING` | `Now Playing` | Heading while something is playing |
+| `HEADING_COMING_SOON` | `Coming Soon` | Heading over Radarr Coming Soon posters |
+| `HEADING_TRAILER` | `Now Previewing` | Heading while a trailer plays |
+| `HEADING_CUSTOM` | `Spotlight` | Heading over your own posters and photos |
+| `HA_URL` | *(blank)* | Home Assistant address, e.g. `http://192.168.1.100:8123` (for the F1 leader) |
+| `HA_TOKEN` | *(blank)* | Home Assistant long-lived access token (Profile > Security). Read-only use. |
+| `F1_LEADER` | `true` | While an F1 session is live (HA F1 integration), show the leader's photo in the team colour instead of posters. A theater movie in Plex still wins. |
+| `HEADING_F1` | `Race Leader` | Heading for the F1 leader during a race or sprint (other sessions say e.g. `Qualifying leader`) |
+| `F1_WINNER_MINUTES` | `15` | After a race or sprint, show the winner with the final podium for this many minutes (0 = off) |
+| `F1_CARDS_EVERY` | `8` | During race week, add a countdown card and the driver standings to the slideshow every N posters (0 = off) |
+| `HEADING_F1_WINNER` / `HEADING_F1_WEEK` / `HEADING_F1_STANDINGS` | `Race Winner` / `Race Week` / `Championship` | Headings for the winner screen and the race-week cards |
+| `F1_LEADER_ENTITY` etc. | `sensor.f1_drivers_top_three_p1` | Entity ids, in case the integration names them differently (`F1_SESSION_ENTITY`, `F1_DRIVERS_ENTITY`, `F1_LAP_ENTITY`) |
+| `SHOW_TITLE` | `false` | Show the title as a big line under the poster. Off by default because the poster already shows it, which makes the poster larger. TV episodes still show `S02E04 · Episode name`, and trailers show the title in the small line. |
+| `SHOW_SCORES` | `true` | Critic and audience scores (from Plex) under the poster |
+| `SHOW_STUDIO` | `true` | Studio next to the year |
+| `EXCLUDE_RATINGS` | (none) | Content ratings to leave out of the idle slideshow, e.g. `R,NC-17` |
+| `EXCLUDE_RATINGS_HOURS` | (always) | Only apply `EXCLUDE_RATINGS` between these hours, e.g. `07-21` (overnight ranges like `21-07` work) |
+| `INCLUDE_GENRES` | (all) | Only show these genres in the idle slideshow, e.g. `Comedy,Animation` |
+| `EXCLUDE_GENRES` | (none) | Leave these genres out, e.g. `Horror` |
+| `CUSTOM_DIR` | `/posters` | Folder of your own posters/photos (jpg, png, webp, gif). Map a host folder to it |
+| `CUSTOM_EVERY` | `4` | Show one of your own images after every N movie posters (0 = off) |
+| `CUSTOM_CAPTIONS` | `true` | Use the file name as the caption (`Family_Photo.jpg` -> "Family Photo") |
+| `RADARR_URL` | (none) | Radarr address, e.g. `http://192.168.1.100:7878`. Needed for Coming Soon and trailers |
+| `RADARR_API_KEY` | (none) | Radarr API key (Radarr > Settings > General) |
+| `COMING_SOON_EVERY` | `6` | Show a Coming Soon poster (Radarr movies that are not out yet: theatrical date, or digital date if there is none, in the future) after every N posters (0 = off) |
+| `COMING_SOON_DAYS` | `120` | How far ahead to look |
+| `TRAILERS_EVERY` | `8` | Play a trailer after every N posters (0 = off) |
+| `TRAILER_SOURCE` | `both` | `both` = local file first, then YouTube; `files` or `youtube` only |
+| `TRAILER_MAX_SECONDS` | `150` | Longest a trailer plays before moving on |
+| `TRAILER_MUTED` | `true` | `false` plays trailers with sound. Fully Kiosk must allow it: Web Content Settings > Autoplay Videos on (and Autoplay Audio, where offered). If the browser still blocks sound the trailer plays silently. Trailers never play while anything is playing in Plex. |
+| `TRAILER_VOLUME` | `60` | Trailer volume, 0-100 (only when sound is on) |
+| `MOVIES_DIR` | `/movies` | Your movies folder mapped read-only into the container, for local trailer files (`*-trailer.mp4` or a `Trailers` sub-folder) |
+
+## Credits
+
+Built by SeveredDime with help from Claude. F1 data comes from the [F1 Sensor](https://github.com/Nicxe/f1_sensor) Home Assistant integration. Marquee is a hobby project and is not affiliated with Plex, Radarr, Formula 1 or Home Assistant.
