@@ -4,7 +4,7 @@ Yup, it's vibe coded, deal with it.
 
 I have a tv operating as a digital movie poster in my theater.  It was running Posterr but I have having a lot of issues with it flickering and updating constantly so I went looking for a solution, which I didn't quite find.  I fired up Claude and this is what we came up with. 
 
-It's a small Docker container that I run in Unraid that ties into Plex and puts a poster board on any TV with a web browser. I run it on a 42" Google TV running Fully Kiosk Browser.
+It's a small Docker container that I run in Unraid that ties into Plex and displays movie posters on any TV with a web browser. I run it on a 42" Google TV running Fully Kiosk Browser.
 
 ![Now Available, Now Playing and Coming Soon screens](docs/images/posters.jpg)
 
@@ -12,13 +12,13 @@ It's a small Docker container that I run in Unraid that ties into Plex and puts 
 
 - **When nothing is playing,** it slowly cycles through posters from your Plex movie library, with the year, studio, rating and scores underneath.
 - **When a movies is started,** it switches to that poster with a progress bar, how much time is left and what time it ends, along with movie information 4K, HDR or Dolby TrueHD.
-- **I didn't care for the poster to be lit while watching a movie, I find it distracting. When a movie play,** the screen fades to black, it does not turn off. You may find that distracting as well, if you have some automation in your home you could likely have it automatically fully turn off. 
+- **I didn't care for the poster to be lit while watching a movie, I find it distracting. When a movie plays,** the screen fades to black, it does not turn off. You may find that distracting as well, if you have some automation in your home you could likely have it automatically fully turn off. 
 - **It pulls in Coming Soon from Radar for movies not yet released.  I didn't want past released movies in the queue to be included as there is no quartentee they will show up. 
 - **If you have your own posters or family photos,** you can drop them in a folder and they'll show up in the rotation as we;;.
 
 ### And for race weekends
 
-We are big F1 Fas, so Marquee can also hook into F1 integration in Home Assistant. During a race it shows who's leading with their team colours, who's in 2nd and 3rd and how far back they are, a banner when the safety car comes out, a pop-up for pit stops and fastest laps, and the winner once it's over. During race week it adds a countdown to the next race and the championship standings in the poster rotation.  It even works when watching race replays but Home Assistant is required for that.
+We are big F1 Fans, so Marquee can also hook into F1 integration in Home Assistant. During a race it shows who's leading with their team colours, who's in 2nd and 3rd and how far back they are, a banner when the safety car comes out, a pop-up for pit stops and fastest laps, and the winner once it's over. During race week it adds a countdown to the next race and the championship standings in the poster rotation.  It works when watching race replays but Home Assistant is required for that.
 
 ![F1 race leader, safety car, fastest lap and race winner screens](docs/images/f1-live.jpg)
 
