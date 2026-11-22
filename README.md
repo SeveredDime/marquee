@@ -2,7 +2,7 @@
 
 A movie-theater style **Now Showing** display for Plex. It runs as one small Docker container and turns a TV (portrait or landscape) into a cinema lobby poster board, with no flicker between screens.
 
-![Poster screens](docs/images/posters.png)
+![Now Available, Now Playing and Coming Soon screens](docs/images/posters.jpg)
 
 ## What it shows
 
@@ -13,11 +13,9 @@ A movie-theater style **Now Showing** display for Plex. It runs as one small Doc
 - **Spotlight** (optional). Your own posters and photos, mixed into the slideshow.
 - **Formula 1** (optional, needs Home Assistant). During a live session, or an F1 replay, it shows the race leader with team colours, P2/P3 with gaps, flag and safety-car banners, pit and fastest-lap pop-ups, and the winner when the race ends. During race week it adds a countdown card and the championship standings.
 
-![F1 live screens](docs/images/f1-live.png)
+![F1 race leader, safety car, fastest lap and race winner screens](docs/images/f1-live.jpg)
 
-![F1 race week cards](docs/images/f1-race-week.png)
-
-*Screenshots use placeholder artwork.*
+*Screenshots of the real page, shown in portrait. The F1 timing numbers are sample data.*
 
 ## How it works
 
