@@ -99,9 +99,10 @@
   body.flag-sc #f1bg, body.flag-vsc #f1bg { background: radial-gradient(70% 55% at 50% 62%, #f5c518 0%, transparent 72%); }
   body.flag-red #f1bg { background: radial-gradient(70% 55% at 50% 62%, #e10600 0%, transparent 72%); }
   @keyframes flagpulse { 50% { filter: brightness(1.25); } }
-  #f1toast { top: calc(7 * var(--vh)); margin: 0 auto; width: max-content; max-width: 90%; padding: calc(1 * var(--vh)) calc(2.2 * var(--vh)); border-radius: 99px; font-weight: 700; font-size: calc(2 * var(--vh));
+  #f1toast { top: 0; margin: 0 auto; width: max-content; max-width: 90%; padding: calc(1 * var(--vh)) calc(2.2 * var(--vh)); border-radius: 99px; font-weight: 700; font-size: calc(2 * var(--vh));
     background: rgba(16,18,24,.9); border: 1px solid var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: translateY(-20%); transition: opacity 400ms ease, transform 400ms ease; }
   body.f1 #f1toast.on { opacity: 1; transform: none; }
+  body.flag #f1toast { top: calc(6 * var(--vh)); }
   #f1toast.fastest { border-color: #a855f7; box-shadow: 0 0 1.5em rgba(168,85,247,.45); }
   #f1toast.pit { border-color: #f5c518; }
 
