@@ -80,6 +80,7 @@ Every setting is an environment variable (a field in the Unraid template).
 | `SLIDE_SECONDS` | `30` | Seconds per idle poster |
 | `THEATER_PLAYERS` | (none) | Comma-separated player names that trigger the black screen, e.g. `SHIELD` |
 | `THEATER_MODE` | `black` | `black` = fade to black for theater playback, `poster` = show it like any other stream |
+| `THEATER_FADE` | `all` | `all` = any theater playback fades to black, `movies` = only movies do, TV episodes show like any other stream. Either way the screen comes back once playback ends, even if the player sits on its end or Up Next screen (about 3 minutes after it stops moving), or after 30 minutes paused. |
 | `HIDE_USER` | `true` | Hide who is watching. Set to `false` to show "Watching: name" under the progress bar |
 | `USER_NAMES` | (none) | Friendly names for Plex users, e.g. `jsmith=John, kidsaccount=The Kids`. Matched on Plex user name or user id, not case-sensitive. Users not listed show their Plex name. The container log prints each Plex user name the first time it is seen |
 | `HIDE_PLAYER` | `true` | Hide the player/device name next to the viewer |
