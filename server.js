@@ -15,6 +15,8 @@ const CFG = {
   pollSeconds: Math.max(2, parseInt(env('POLL_SECONDS', '5'), 10)),
   theaterPlayers: env('THEATER_PLAYERS', '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
   theaterMode: env('THEATER_MODE', 'black').toLowerCase(), // black | poster
+  // THEATER_FADE: all = any theater playback fades to black, movies = only movies do (TV episodes show like any other stream)
+  theaterFade: /^movies?$/i.test(env('THEATER_FADE', 'all').trim()) ? 'movies' : 'all',
   hideUser: /^(1|true|yes)$/i.test(env('HIDE_USER', 'true')),
   hidePlayer: /^(1|true|yes)$/i.test(env('HIDE_PLAYER', 'true')),
   // USER_NAMES: "plexuser=Friendly Name, otheruser=Mom" (matched on Plex user name or user id, case-insensitive)
@@ -614,14 +616,30 @@ async function poll() {
   } catch (e) { log('Session poll failed:', e.message); }
 }
 let plexAll = [];
+// Theater sessions that have ended but that the player hasn't closed yet (post-play / Up Next screen, or paused for good)
+// must not keep the screen black. Track when each session's position last moved.
+const THEATER_IDLE_MS = 3 * 60000, THEATER_PAUSE_MS = 30 * 60000, THEATER_END_MS = 2 * 60000;
+const moved = new Map();   // session id -> { offset, at }
+// 'dark' = fade to black, 'show' = treat like any other stream, 'ended' = ignore it.
+function theaterRole(s) {
+  const now = Date.now(), m = moved.get(s.id);
+  if (!m || Math.abs(s.viewOffset - m.offset) > 1000) moved.set(s.id, { offset: s.viewOffset, at: now });
+  const still = now - moved.get(s.id).at;
+  if (s.duration && s.viewOffset >= s.duration - THEATER_END_MS && s.state !== 'playing') return 'ended';   // finished
+  if (s.state === 'paused' ? still >= THEATER_PAUSE_MS : still >= THEATER_IDLE_MS) return 'ended';         // sitting on an end or Up Next screen
+  if (CFG.theaterMode === 'poster' || (CFG.theaterFade === 'movies' && s.type !== 'movie')) return 'show';
+  return 'dark';                                                                                              // a short pause in the theater stays dark
+}
 // Works out what the screen should show from the last Plex poll and the F1 state, and pushes it if it changed.
 function recompute() {
   {
     const all = plexAll;
-    const theaterOn = all.some(s => s.theater);
-    // Paused streams are skipped so the slideshow keeps going; the theater still goes black while paused.
-    const shown = all.filter(s => s.state !== 'paused' && (!s.theater || CFG.theaterMode === 'poster'));
-    const mode = theaterOn && CFG.theaterMode === 'black' ? 'black' : f1 ? 'f1' : (shown.length ? 'playing' : 'idle');
+    for (const id of moved.keys()) if (!all.some(s => s.id === id)) moved.delete(id);
+    const role = new Map(all.filter(s => s.theater).map(s => [s.id, theaterRole(s)]));
+    const theaterOn = [...role.values()].includes('dark');
+    // Paused streams are skipped so the slideshow keeps going. Theater sessions follow theaterRole().
+    const shown = all.filter(s => s.state !== 'paused' && (!s.theater || role.get(s.id) === 'show'));
+    const mode = theaterOn ? 'black' : f1 ? 'f1' : (shown.length ? 'playing' : 'idle');
     // Only what changes the picture goes in the signature; progress is interpolated client-side.
     const sig = mode + '|' + f1Sig() + '|' + shown.map(s => [s.id, s.key, s.state, s.resolution, s.audio, s.user, s.player].join(':')).join(',');
     // Re-sync progress occasionally (seek/pause drift) without forcing a redraw of the poster.
