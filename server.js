@@ -619,7 +619,8 @@ function recompute() {
   {
     const all = plexAll;
     const theaterOn = all.some(s => s.theater);
-    const shown = all.filter(s => !s.theater || CFG.theaterMode === 'poster');
+    // Paused streams are skipped so the slideshow keeps going; the theater still goes black while paused.
+    const shown = all.filter(s => s.state !== 'paused' && (!s.theater || CFG.theaterMode === 'poster'));
     const mode = theaterOn && CFG.theaterMode === 'black' ? 'black' : f1 ? 'f1' : (shown.length ? 'playing' : 'idle');
     // Only what changes the picture goes in the signature; progress is interpolated client-side.
     const sig = mode + '|' + f1Sig() + '|' + shown.map(s => [s.id, s.key, s.state, s.resolution, s.audio, s.user, s.player].join(':')).join(',');

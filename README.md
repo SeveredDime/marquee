@@ -26,6 +26,7 @@ We are big F1 Fans, so Marquee can also hook into F1 integration in Home Assista
 ## A few things I cared about
 
 - **No flicker.** Each new poster is fully loaded before it fades in, and the screen only changes when it actually needs to.
+- **Paused streams don't hold the screen.** With several people on Plex, someone is always paused, so paused streams are skipped and the slideshow keeps going. Resume and the poster comes back.
 - **Light on the server.** It's a single small Node.js program with nothing extra to install, and it checks Plex every few seconds.
 - **Your passwords stay put.** The Plex, Radarr and Home Assistant keys live in the container. The TV's browser never sees them.
 - **Easy to tweak.** Headings, the theater name across the top, how often things rotate, what ratings or genres to skip at certain hours: all of it in in the Unraid template.
