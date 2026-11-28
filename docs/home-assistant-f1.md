@@ -23,7 +23,7 @@ Marquee only reads from Home Assistant. It never changes anything there.
 | When | Screen |
 |---|---|
 | Race week | A countdown card with the circuit outline, and the top-5 driver standings, mixed into the poster slideshow (`F1_CARDS_EVERY`) |
-| Live session | The leader's photo in team colours, the lap count, and P2/P3 with gaps. Practice and qualifying say e.g. "Qualifying leader" |
+| Live session | The leader's photo in team colours, the lap count, and P2/P3 with gaps. Practice and qualifying say e.g. "Qualifying leader", with a Q1/Q2/Q3 tag. The screen stays up through the breaks between qualifying parts and red flags, until the whole session is over. |
 | Yellow flag, safety car, VSC, red flag | A coloured banner across the top |
 | Pit stop or new fastest lap | A short pop-up |
 | Race finished | The winner and podium for `F1_WINNER_MINUTES` |
