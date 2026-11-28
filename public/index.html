@@ -326,7 +326,7 @@
     var race = /race|sprint/i.test(f.session || '');
     var heading = f.winner ? (f.heading || 'Race Winner') : race ? H.f1 : (f.session ? f.session + ' leader' : H.f1);
     var lap = f.lap && f.laps ? 'Lap ' + f.lap + '/' + f.laps : '';
-    show(f.key, f.img || '', [heading, f.name, [f.team, f.meeting].filter(Boolean).join('  ·  '), f.winner ? ['WINNER', f.number ? '#' + f.number : '', f.session] : ['P1', f.number ? '#' + f.number : '', race ? lap : ''], false, '', []]);
+    show(f.key, f.img || '', [heading, f.name, [f.team, f.meeting].filter(Boolean).join('  ·  '), f.winner ? ['WINNER', f.number ? '#' + f.number : '', f.session] : ['P1', f.number ? '#' + f.number : '', race ? lap : (f.stage || '')], false, '', []]);
     // P2 and P3 with their gap to the leader (or the final gap on the winner screen)
     var pod = (f.podium || []).map(function (p) {
       return '<div class="pod" style="--c:' + esc(p.color) + '">' + (p.img ? '<img src="' + esc(p.img) + '" alt="">' : '') + '<div class="p">P' + p.pos + '</div><div class="n"><b>' + esc(p.name) + '</b><span>' + esc(p.gap || p.team) + '</span></div></div>';

@@ -397,6 +397,8 @@ const haTry = id => haState(id).catch(() => ({ state: 'unavailable', attributes:
 const isUnset = s => /^(unavailable|unknown|none|)$/i.test(String(s));
 const f1Live = (st, status) => {
   if (/^(finished|finalised|finalized|ended)$/i.test(String(status || ''))) return false;
+  // Breaks between Q1/Q2/Q3 (and red flags) report the part as finished/inactive, but the session isn't over.
+  if (/^(live|break|suspended)$/i.test(String(status || ''))) return true;
   const a = (st && st.attributes) || {};
   return a.active === true || /^(started|live|running|aborted|suspended)$/i.test(String(a.live_status || ''));
 };
@@ -462,7 +464,11 @@ async function pollF1Once() {
     await f1LoadDrivers();
     const [leader, p2, p3, lapSt, track] = await Promise.all([haState(F1E.leader), haTry(F1E.p2), haTry(F1E.p3), haTry(F1E.lap), haTry(F1E.track)]);
     await f1LoadPositions(false);
-    if (isUnset(leader.state)) { f1 = null; return; }
+    const gap = /^(break|suspended)$/i.test(String(status.state));
+    // Q1/Q2/Q3 tag for qualifying (SQ1.. for sprint qualifying), and a Break chip between parts.
+    const part = !race && /qualifying/i.test(String(sa.type || sa.name || '')) && Number(sa.session_part) ? (/sprint/i.test(String(sa.type || sa.name)) ? 'SQ' : 'Q') + sa.session_part : '';
+    const stage = gap ? (/break/i.test(status.state) ? 'Break' : 'Suspended') : part;
+    if (isUnset(leader.state)) { if (gap && f1LastLive) { f1 = Object.assign({}, f1LastLive, { stage, toast: null }); } else f1 = null; return; }
     const d = f1FindDriver(leader);
     if (!d) { if (!f1Warned) { log('F1: could not match the leader to a driver:', JSON.stringify(leader.state)); f1Warned = true; } f1 = null; return; }
     const lap = /^\d+$/.test(lapSt.state) ? lapSt.state : '', laps = (lapSt.attributes || {}).total_laps || '';
@@ -483,13 +489,14 @@ async function pollF1Once() {
     if (!flKey && f1Seen.fastest === null) f1Seen.fastest = '';
     const next = { key: 'f1:' + d.tla, tla: d.tla, name: f1Name(d), team: d.team || '', color: d.team_color || '#e8414f',
       number: d.racing_number || '', img: f1Img(d), lap, laps, session: sa.name || sa.type || '', meeting: sa.meeting_name || '',
-      podium, flag: f1Flag(track.state), toast: f1Toast && Date.now() < f1Toast.until ? { text: f1Toast.text, kind: f1Toast.kind, id: f1Toast.id } : null };
+      podium, stage, flag: f1Flag(track.state), toast: f1Toast && Date.now() < f1Toast.until ? { text: f1Toast.text, kind: f1Toast.kind, id: f1Toast.id } : null };
+    if ((f1 ? f1.stage : '') !== next.stage && next.stage) log('F1: ' + next.session + ' ' + next.stage);
     if (!f1 || f1.key !== next.key) log(`F1: ${next.session} leader is ${next.name} (${next.team})`);
     if ((f1 ? f1.flag : '') !== next.flag) log('F1: track status ' + (next.flag || 'clear'));
     f1 = next; f1LastLive = next; f1LastLiveAt = Date.now();
   } catch (e) { if (Date.now() - f1Checked > 600e3) { log('F1: Home Assistant check failed:', e.message); f1Checked = Date.now(); } f1 = f1Winner; }
 }
-const f1Sig = () => f1 ? JSON.stringify([f1.key, f1.lap, f1.flag, f1.toast && f1.toast.id, (f1.podium || []).map(p => p.tla + p.gap)]) : '';
+const f1Sig = () => f1 ? JSON.stringify([f1.key, f1.lap, f1.flag, f1.stage, f1.toast && f1.toast.id, (f1.podium || []).map(p => p.tla + p.gap)]) : '';
 let f1Busy = false, f1Again = false;
 async function pollF1() {
   if (f1Busy) { f1Again = true; return; }
